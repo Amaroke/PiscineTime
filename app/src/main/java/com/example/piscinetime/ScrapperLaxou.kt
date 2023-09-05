@@ -7,7 +7,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.Jsoup
 
-class PiscineScheduleScraper {
+class ScrapperLaxou {
     private val okHttpClient = OkHttpClient()
 
     suspend fun scrapePiscineSchedule(): String {
@@ -27,10 +27,31 @@ class PiscineScheduleScraper {
                 if (responseBody != null) {
                     val responseText = responseBody.string()
                     val document = Jsoup.parse(responseText)
+
+                    document.select("em:containsOwn(Evacuation du bassin 30 mns avant la fermeture)")
+                        .remove()
+
                     val scheduleElements = document.select("p.bloc-infos-pratiques")
-                    val scheduleText = scheduleElements.subList(3, scheduleElements.size)
-                        .joinToString(separator = "\n") { it.text() }
-                    scheduleText
+                    val filteredLines = StringBuilder()
+                    var ignoreLines = false
+
+                    for (element in scheduleElements.subList(3, scheduleElements.size)) {
+                        val htmlContent = element.html()
+                        if (htmlContent.startsWith("<br>", ignoreCase = true)) {
+                            ignoreLines = false
+                        } else if (!ignoreLines) {
+                            if (!htmlContent.startsWith("Evacuation", ignoreCase = true) &&
+                                !htmlContent.startsWith("Réserver", ignoreCase = true) &&
+                                !htmlContent.startsWith("Fréquentation", ignoreCase = true)
+                            ) {
+                                filteredLines.append(htmlContent).append("\n")
+                            } else {
+                                ignoreLines = true
+                            }
+                        }
+                    }
+
+                    filteredLines.toString()
                 } else {
                     throw Exception("Réponse vide du serveur")
                 }

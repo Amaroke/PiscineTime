@@ -1,5 +1,7 @@
 package com.example.piscinetime
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.webkit.WebView
 import androidx.activity.ComponentActivity
@@ -19,7 +21,19 @@ import com.example.piscinetime.ui.theme.PiscineTimeTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+private const val HTML_CONTENT_PREF_KEY = "html_content_pref_key"
+
 class MainActivity : ComponentActivity() {
+
+    // Function to save HTML content to shared preferences
+    private fun saveHtmlContentToSharedPreferences(htmlContent: String) {
+        val sharedPreferences: SharedPreferences = getSharedPreferences(
+            "MySharedPrefs", Context.MODE_PRIVATE
+        )
+        val editor: SharedPreferences.Editor = sharedPreferences.edit()
+        editor.putString(HTML_CONTENT_PREF_KEY, htmlContent)
+        editor.apply()
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -43,13 +57,24 @@ class MainActivity : ComponentActivity() {
                         }
                         piscineSchedule = newPiscineSchedule
                         piscineSchedule2 = newPiscineSchedule2
+
                     }
+
+
 
 
                     if (piscineSchedule.isNotEmpty() && piscineSchedule2.isNotEmpty()) {
-                        WebViewContainer(htmlContent = piscineSchedule + piscineSchedule2)
+                        // Combine the two HTML contents
+                        val combinedHtmlContent = piscineSchedule + piscineSchedule2
+
+                        // Save the HTML content to shared preferences
+                        saveHtmlContentToSharedPreferences(combinedHtmlContent)
+
+                        piscineSchedule = combinedHtmlContent
+                        WebViewContainer(htmlContent = piscineSchedule)
                     }
                 }
+
             }
         }
     }
